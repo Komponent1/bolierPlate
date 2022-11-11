@@ -1,0 +1,14 @@
+{
+  "name": "seolim",
+  "version": "1.0.0",
+  "description": "",
+  "main": "generate.js",
+  "scripts": {
+    "generate": "node bin/generate.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "bin": {
+    "generate-seolim": "bin/generate.js"
+  }
+}

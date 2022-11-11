@@ -1,0 +1,50 @@
+version: "3"
+
+services:
+  db:
+    container_name: db
+    build:
+      context: ./db
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: "${DB_ID}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_DB: "${DB_NAME}"
+    volumes:
+      - ./db/data:/backup
+
+  gateway:
+    container_name: gateway
+    build:
+      context: ./gateway
+    ports:
+      - 80:80
+    expose:
+      - '80'
+    restart: always
+    volumes:
+      - ./gateway/app/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - apiserver
+    command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
+
+  apiserver:
+    container_name: apiserver
+    build:
+      context: ./api
+    ports:
+      - 8003:8003
+    environment:
+      NODE_ENV: "product"
+      DB_ID: "${DB_ID}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_NAME: ${DB_NAME}"
+      DB_HOST: 'db'
+      FILE_USER: "${FILE_USER}"
+      FILE_PASSWORD: "${FILE_PASSWORD}"
+      BASEURL: "${BASEURL}"
+    volumes:
+      - ./api/app:/usr/app
+      - /usr/app/node_modules
+    command: 'npm run build'

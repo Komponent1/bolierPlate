@@ -5,14 +5,15 @@ services:
     container_name: db
     build:
       context: ./db
+    restart: always
     ports:
       - 5432:5432
     environment:
-      POSTGRES_USER: "${DB_ID}"
+      POSTGRES_USER: "${DB_USER}"
       POSTGRES_PASSWORD: "${DB_PASSWORD}"
       POSTGRES_DB: "${DB_NAME}"
     volumes:
-      - ./db/data:/backup
+      - ./db/sql_script:/sql_script
 
   gateway:
     container_name: gateway
@@ -24,27 +25,23 @@ services:
       - '80'
     restart: always
     volumes:
-      - ./gateway/app/nginx.conf:/etc/nginx/nginx.conf
+      - ./gateway/conf/nginx.conf:/etc/nginx/nginx.conf
     depends_on:
       - apiserver
     command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
 
-  apiserver:
-    container_name: apiserver
+  api:
+    container_name: api
     build:
       context: ./api
     ports:
-      - 8003:8003
+      - 8001:8000
     environment:
       NODE_ENV: "product"
-      DB_ID: "${DB_ID}"
+      DB_ID: "${DB_USER}"
       DB_PASSWORD: "${DB_PASSWORD}"
       DB_NAME: ${DB_NAME}"
       DB_HOST: 'db'
-      FILE_USER: "${FILE_USER}"
-      FILE_PASSWORD: "${FILE_PASSWORD}"
-      BASEURL: "${BASEURL}"
     volumes:
-      - ./api/app:/usr/app
-      - /usr/app/node_modules
-    command: 'npm run build'
+      - ./api/app:/app
+    command: '/bin/sh -c "npm install && npm start"'
